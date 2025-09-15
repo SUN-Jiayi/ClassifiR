@@ -1,0 +1,307 @@
+---
+title: "evaluation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{evaluation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ClassifiR)
+```
+
+# Evaluation and Package Analysis
+
+The evaluation module in the ClassifiR package provides comprehensive tools to assess the performance of binary classification models. It supports the computation of a wide range of standard metrics, including accuracy, precision, recall, F1 score, specificity, balanced accuracy, Matthews correlation coefficient (MCC), and log loss. When probability estimates are available, the module can also compute and visualize ROC curves and Area Under the Curve (AUC) using ggplot2 and the pROC package.
+
+In addition to evaluating individual models, the module enables side-by-side comparison of multiple classifiers. The compare_models() function summarizes the performance of each model across multiple metrics and identifies the best-performing model for each criterion. This helps users to quickly interpret and select the most suitable model for deployment.
+
+# Data Preparation and Splitting
+
+We start by loading the preprocessed weather dataset that has been cleaned and prepared for binary classification tasks.
+
+```{r}
+data("weatherAUS_processed")
+head(weatherAUS_processed)
+```
+
+```{r}
+train_test_list = splitDataset_(weatherAUS_processed)
+train = train_test_list$train
+test = train_test_list$test
+
+X_train = train[, -ncol(train)]
+y_train = train[[ncol(train)]]
+
+X_test = test[, -ncol(test)]
+y_test = test[[ncol(test)]]
+```
+
+## Evaluate One Single Binary Classification Model
+
+After training each model, we evaluate its performance using a variety of metrics, including accuracy, precision, recall, F1 score, specificity, balanced accuracy, and Matthews correlation coefficient (MCC). If predicted probabilities are available, we also compute the log loss, AUC and plot the ROC curve to assess the model’s ability to rank observations.
+
+In the following sections, we evaluate each model included in the package individually. The detailed usage of functions in the binary classification models is not repeated here; please refer to their respective vignettes for full documentation and examples.
+
+evaluate_binary_classification(): this step calculates a variety of performance metrics such as accuracy, precision, recall, F1 score, and log loss based on the predicted labels and predicted probabilities.
+
+evaluate_roc_auc(): this step computes the ROC curve and AUC to evaluate the model’s ability to distinguish between the two classes based on predicted probabilities.
+
+### KNN
+
+```{r}
+weather_subset = weatherAUS_processed[sample(nrow(weatherAUS_processed), 2000), ]
+
+train_subset = weather_subset[1:1600, ]
+test_subset = weather_subset[1601:2000, ]
+```
+
+```{r}
+knn = my_knn(train_subset, test_subset)
+```
+
+```{r}
+preds_knn = knn$prediction
+probs_knn = knn$probability
+```
+
+```{r}
+head(probs_knn, 10)
+head(preds_knn, 10)
+```
+
+```{r}
+evaluate_binary_classification(y_test[1:400], preds_knn, probs_knn)
+```
+
+```{r}
+evaluate_roc_auc(y_test[1:400], probs_knn)
+```
+
+### Logistic Regression
+
+```{r}
+lr <- my_logistic_regression(train, test)
+```
+
+```{r}
+preds_lr = lr$prediction
+probs_lr = lr$probability
+```
+
+```{r}
+head(probs_lr, 10)
+head(preds_lr, 10)
+```
+
+```{r}
+evaluate_binary_classification(y_test, preds_lr, probs_lr)
+```
+
+```{r}
+evaluate_roc_auc(y_test, probs_lr)
+```
+
+### Support Vector Machine
+
+```{r}
+svm = my_svm(train, test)
+```
+
+```{r}
+preds_svm = svm$prediction
+probs_svm = svm$probability
+```
+
+```{r}
+head(probs_svm, 10)
+head(preds_svm, 10)
+```
+
+```{r}
+evaluate_binary_classification(y_test, preds_svm, probs_svm)
+```
+
+```{r}
+evaluate_roc_auc(y_test, probs_svm)
+```
+
+### Decision Tree
+
+```{r}
+tuning_dt = tune_decision_tree(
+  X_train, y_train,
+  max_depth_values = c(4, 5),
+  min_samples_split_values = c(8, 10),
+  criterion = "gini",
+  split_ratio = 0.8,
+  seed = 123
+)
+```
+
+```{r}
+tree_model = build_tree(
+  X_train, y_train,
+  max_depth = tuning_dt$best_params$max_depth,
+  min_samples_split = tuning_dt$best_params$min_samples_split,
+  criterion = "gini"
+)
+```
+
+```{r}
+probs_tree = predict_tree_prob_batch(tree_model, X_test)
+preds_tree = as.integer(probs_tree >= 0.5)
+```
+
+```{r}
+head(probs_tree, 10)
+head(preds_tree, 10)
+```
+
+```{r}
+evaluate_binary_classification(y_test, preds_tree, probs_tree)
+```
+
+```{r}
+evaluate_roc_auc(y_test, probs_tree)
+```
+
+### Random Forest
+
+```{r}
+tuning_rf = tune_random_forest(
+  X_train, y_train,
+  mtry_values = c(10, 20),
+  nodesize_values = c(5, 10),
+  ntree = 100,
+  split_ratio = 0.8,
+  seed = 123
+)
+```
+
+```{r}
+rf_model = train_random_forest(
+  X_train, y_train,
+  ntree = 100,
+  mtry = tuning_rf$best_params$mtry,
+  nodesize = tuning_rf$best_params$nodesize
+)
+```
+
+```{r}
+probs_rf = predict_random_forest_prob(rf_model, X_test)
+preds_rf = as.integer(probs_rf >= 0.5)
+```
+
+```{r}
+evaluate_binary_classification(y_test, preds_rf, probs_rf)
+```
+
+```{r}
+evaluate_roc_auc(y_test, probs_rf)
+```
+
+### Boosting
+
+```{r}
+idx <- sample(nrow(train), 0.8 * nrow(train))
+train_part <- train[idx, ]
+val_part <- train[-idx, ]
+```
+
+```{r}
+result = tune_adaboost_(train_part, val_part, iter_options = c(10, 20))
+model = result$model
+```
+
+```{r}
+preds_boosting = predict_adaboost_(model, test)
+```
+
+```{r}
+evaluate_binary_classification(y_test, preds_boosting)
+```
+
+## Compare ROC Curves Across Models
+
+We collect each model’s predicted labels into pred_list and predicted probabilities into prob_list. Only models with probability outputs are included in prob_list for evaluating AUC and log loss. Note that all vectors in pred_list and prob_list must be of equal length and contain only 0/1 values.
+
+```{r}
+pred_list = list(
+  DecisionTree = preds_tree,
+  RandomForest = preds_rf,
+  LogisticRegression = preds_lr,
+  SupportVectorMachine = preds_svm,
+  Boosting = preds_boosting
+)
+
+prob_list = list(
+  DecisionTree = probs_tree,
+  RandomForest = probs_rf,
+  LogisticRegression = probs_lr,
+  SupportVectorMachine = probs_svm
+)
+
+pred_list = lapply(pred_list, as.vector)
+prob_list = lapply(prob_list, as.vector)
+```
+
+We then use the plot_model_roc_comparison() function to generate a combined ROC curve plot.
+
+```{r}
+plot_model_roc_comparison(y_test, prob_list)
+```
+
+## Compare Model Performance and Identify the Best Model
+
+We use the compare_models() function to evaluate all models simultaneously based on a variety of classification metrics such as accuracy, precision, recall, F1 score, specificity, MCC, and log loss (if probabilities are provided). The function returns a summary table of metrics for each model and identifies the best-performing model for each criterion, helping guide model selection.
+
+Since some models in the pred_list (such as boosting) do not provide probability vector, the actual number of models in the pred_list and prob_list is different, and we do not input the prob_list here.
+
+```{r}
+comparison_result = compare_models(
+  y_test,
+  pred_list = pred_list
+  )
+
+comparison_result
+```
+
+We can also modify our pred_list and prob_list to include only the models for which probability predictions are available, thereby enabling the inclusion of log loss in our evaluation metrics.
+
+```{r}
+pred_list_2 = list(
+  DecisionTree = preds_tree,
+  RandomForest = preds_rf,
+  LogisticRegression = preds_lr,
+  SupportVectorMachine = preds_svm
+)
+
+prob_list_2 = list(
+  DecisionTree = probs_tree,
+  RandomForest = probs_rf,
+  LogisticRegression = probs_lr,
+  SupportVectorMachine = probs_svm
+)
+
+pred_list_2 = lapply(pred_list_2, as.vector)
+prob_list_2 = lapply(prob_list_2, as.vector)
+```
+
+```{r}
+comparison_result_2 = compare_models(
+  y_test,
+  pred_list = pred_list_2,
+  prob_list = prob_list_2
+  )
+
+comparison_result_2
+```

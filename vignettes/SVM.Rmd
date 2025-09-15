@@ -1,0 +1,120 @@
+---
+title: "SVM"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SVM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+library(ClassifiR)
+library(ggplot2)
+library(readxl)
+```
+
+## Introduction
+
+This vignette demonstrates how to use the `my_svm()` function from the `ClassifiR` package.
+
+Unlike black-box implementations in common machine learning packages, `my_svm()` is built from scratch using stochastic gradient descent (SGD) to train a linear Support Vector Machine (SVM) classifier. This makes it highly suitable for learning and teaching purposes, giving insight into the mechanics of margin-based classification.
+
+Key features of `my_svm()` include:
+
+1. Outputs both predicted labels and probabilities (via sigmoid of margin);
+
+2. Visibility into raw margin values and model weights.
+
+In addition to basic classification, it supports automatic hyperparameter tuning for both `Learning rate (learning_rate)` and `Regularization strength (lambda)`.
+
+## Load and Prepare Data
+
+We'll use the preprocessed weather dataset provided in the package. It is already cleaned, normalized, and converted to a binary classification format. The last column in each dataset is a binary label (e.g., rain or no rain), and all other columns are numeric features normalized to [0, 1].
+
+```{r}
+data("weatherAUS_processed")
+train_test_list = splitDataset_(weatherAUS_processed)
+train_data = train_test_list$train
+test_data = train_test_list$test
+```
+
+## Train the SVM
+
+Now we train the linear SVM classifier using `my_svm()`. You can experiment with `learning_rate`, `lambda` (regularization strength), and `n_iter` (number of passes through the data).
+
+You can use the default parameters to train a simple linear SVM without tuning.
+```{r}
+model <- my_svm(train_data, test_data, learning_rate = 0.01, lambda = 0.01, n_iter = 50)
+```
+
+## Train with Parameter Tuning
+
+Now, we train the same model with automatic tuning enabled. It will internally search for the best combination of learning rate and lambda using a validation set.
+
+`learning_rates` is a numeric vector of learning rates to try (e.g., c(0.001, 0.01)). Default is 0.01.
+
+`lambda_values` is a numeric vector of lambda (regularization) values to try. Default is c(0.0001, 0.001, 0.01, 0.1).
+
+```{r}
+model_tuned <- my_svm(train_data, test_data,
+                      learning_rates = c(0.001, 0.005, 0.01),
+                      lambda_values = c(0.001, 0.01, 0.1),
+                      n_iter = 100,
+                      tune = TRUE)
+```
+
+## Predictions result
+The returned object contains:
+
+`weights`: learned coefficients (including intercept),
+
+`prediction_train`, `prediction`: predicted labels (0 or 1),
+
+`probability_train`, `probability`: estimated probabilities from the sigmoid of margins,
+
+`train_margins`, `margins`: raw margin scores used in classification,
+
+`predict_fun`: the prediction function itself (for new data).
+
+```{r}
+# View prediction results
+head(model$prediction)
+head(model$probability)
+```
+
+We can evaluate test accuracy and inspect predicted values:
+
+```{r}
+accuracy_svm <- mean(model$prediction == test_data[[ncol(test_data)]])
+accuracy_svm
+```
+
+## Visualization
+Margins are the core of SVM theory — they indicate how far a sample lies from the decision boundary. We can plot the predicted probabilities (derived from margins via the sigmoid function) to see how confidently the model makes its decisions.
+
+```{r}
+# Plot margins and probabilities
+df_svm <- data.frame(
+  Actual = factor(test_data[[ncol(test_data)]]),
+  Predicted = model$prediction,
+  Probability = model$probability
+)
+
+ggplot(df_svm, aes(x = Probability, fill = Actual)) +
+  geom_histogram(bins = 15, alpha = 0.6, position = "identity") +
+  labs(title = "SVM: Predicted Probabilities (based on margins) vs Actual Labels",
+       x = "Predicted Probability",
+       fill = "Actual Label")
+```
+
+## Conclusion
+
+The `my_svm()` function in `ClassifiR` is an educational tool for mastering the principles behind Support Vector Machines. Its transparent architecture enables:
+
+1. Step-by-step control over model fitting,
+
+2. Inspection of margins and weights,
+
+3. Customization and parameter tuning for performance analysis.
+
+Use this function to build intuition about margin-based learning and the trade-offs involved in model complexity and regularization.

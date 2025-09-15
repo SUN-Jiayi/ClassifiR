@@ -1,0 +1,104 @@
+---
+title: "Logistic Regression"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Logistic Regression}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+library(ClassifiR)
+library(readxl)
+library(ggplot2)
+```
+
+## Introduction
+
+This vignette provides a detailed walkthrough for using the `my_logistic_regression()` function from the `ClassifiR` package. This function offers an implementation of logistic regression using gradient descent. Unlike built-in R functions such as `glm()`, our implementation gives users direct control over hyperparameters, data preprocessing, and optimization routines.
+
+Logistic regression is one of the most widely used techniques for binary classification. It models the probability that a binary outcome is equal to 1, given a set of predictor variables.
+
+## Load and Prepare Data
+
+We will use the preprocessed weather dataset bundled with the package. The final column represents the binary response variable (e.g., whether it rained today).
+
+```{r}
+data("weatherAUS_processed")
+
+train_test_list = splitDataset_(weatherAUS_processed)
+train_data = train_test_list$train
+test_data = train_test_list$test
+```
+
+## Fit Logistic Regression Model
+
+We train a logistic regression classifier using the default hyperparameter.
+
+Among the default hyperparameter, there is a numeric vector of candidate learning rates to tune from, whose default is {c(0.001, 0.01, 0.1)} and a numeric vector of candidate iteration counts to tune from, whose default is {c(500, 1000)}. The function will choose the best learning rate and iteration counts and return the final output.
+
+```{r}
+model <- my_logistic_regression(train_data, test_data)
+```
+
+You can also specify custom values for `learning_rate` and `n_iter` to examine the effect on model performance. This will also output the best parameter choosing from function and the best modeling result.
+
+```{r}
+model_tuned <- my_logistic_regression(train_data, test_data, learning_rate = c(0.01, 0.05, 0.1), n_iter = 1500)
+mean(model_tuned$prediction == test_data[[ncol(test_data)]])
+```
+
+## Predict on Test Data
+
+The output of `my_logistic_regression()` is a list containing:
+
+`theta`: learned model coefficients
+
+`predict_fun`: a function to generate predictions on new data
+
+`prediction_train`: predicted labels on training set
+
+`probability_train`: predicted probabilities on training set
+
+`prediction`: predicted labels on test set
+
+`probability`: predicted probabilities on test set
+
+```{r}
+head(model$prediction)
+head(model$probability)
+```
+
+# Accuracy
+```{r}
+accuracy_log <- mean(model$prediction == test_data[[ncol(test_data)]])
+accuracy_log
+```
+
+## Plot Predicted Probabilities
+
+```{r}
+df_plot <- data.frame(
+  Actual = factor(test_data[[ncol(test_data)]]),
+  Predicted = model$prediction,
+  Probability = model$probability
+)
+
+ggplot(df_plot, aes(x = Probability, fill = factor(Actual))) +
+  geom_histogram(bins = 10, position = "identity", alpha = 0.6) +
+  labs(title = "Predicted Probabilities vs Actual Labels", fill = "Actual")
+```
+
+## Conclusion
+
+The `my_logistic_regression()` function in `ClassifiR` is designed for learning and experimentation. It gives users:
+
+1. A transparent view into how logistic regression is trained from scratch;
+
+2. Full access to model internals and customization;
+
+3. Parameter tuning;
+
+4. A standardized and consistent prediction structure.
+
+This makes it ideal for students, educators, and researchers aiming to demystify machine learning models and understand them at the algorithmic level.

@@ -1,0 +1,109 @@
+---
+title: "decision_tree"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{decision_tree}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ClassifiR)
+```
+
+# Data Preparation and Splitting
+
+We start by loading the preprocessed weather dataset that has been cleaned and prepared for binary classification tasks.
+
+```{r}
+data("weatherAUS_processed")
+head(weatherAUS_processed)
+```
+
+Next, we split the data into training and testing subsets using the helper function splitDataset_().
+
+We remove the label column from the feature matrix, storing them separately as X_train / X_test for features and y_train / y_test for labels. This prepares the data for training and evaluation.
+
+```{r}
+train_test_list = splitDataset_(weatherAUS_processed)
+train = train_test_list$train
+test = train_test_list$test
+
+X_train = train[, -ncol(train)]
+y_train = train[[ncol(train)]]
+
+X_test = test[, -ncol(test)]
+y_test = test[[ncol(test)]]
+```
+
+# Decision Tree for Binary Classification
+
+Decision tree is simple, interpretable model that splits the data recursively based on the best feature and threshold. 
+The package supports impurity-based splitting (Gini or entropy).
+
+## Hyperparameter Tuning
+
+We start by tuning the decision tree’s key hyperparameters:
+
+max_depth: the maximum depth of the tree,
+
+min_samples_split: the minimum number of observations required to attempt a split,
+
+criterion: either "gini" or "entropy" to determine the best split.
+
+A portion of the training data (controlled by split_ratio) is used for validation, and the best hyperparameter combination is selected based on validation accuracy.
+
+```{r}
+tuning_dt = tune_decision_tree(
+  X_train, y_train,
+  max_depth_values = c(5, 6, 7),
+  min_samples_split_values = c(10, 15, 20),
+  criterion = "gini",
+  split_ratio = 0.8,
+  seed = 123
+)
+```
+
+## Train the Final Tree Model
+
+Using the best parameters identified during tuning, we train the final decision tree on the full training dataset. The resulting tree_model is a nested list that recursively represents the tree structure, with internal nodes and leaf predictions.
+
+```{r}
+tree_model = build_tree(
+  X_train, y_train,
+  max_depth = tuning_dt$best_params$max_depth,
+  min_samples_split = tuning_dt$best_params$min_samples_split,
+  criterion = "gini"
+)
+```
+
+## Generate Predictions on Test Set
+
+We use the trained decision tree to compute predicted probabilities for the test data. Then, we convert these probabilities into binary predictions using a 0.5 threshold.
+
+Probabilities ≥ 0.5 are predicted as class 1
+
+Probabilities < 0.5 are predicted as class 0
+
+```{r}
+probs_tree = predict_tree_prob_batch(tree_model, X_test)
+preds_tree = as.integer(probs_tree >= 0.5)
+```
+
+# Conclusion
+
+We take a look at the first few predicted probabilities and predicted class labels, then calculate the overall accuracy on the test set to get a quick sense of performance.
+
+```{r}
+head(probs_tree, 10)
+head(preds_tree, 10)
+mean(preds_tree == y_test)
+```
+Further evaluation with precision, recall, F1 score, and ROC/AUC analysis is recommended for a more comprehensive understanding.

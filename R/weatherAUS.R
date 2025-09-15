@@ -1,0 +1,64 @@
+#' Weather Observations Dataset for Predicting Rainfall in Australia
+#'
+#' This dataset provides daily weather records collected from various stations across Australia and is designed
+#' for binary classification tasks — specifically, predicting whether it will rain the next day (`RainTomorrow`).
+#'
+#' It contains 142,193 entries with 24 variables, including a mix of numerical and categorical features that
+#' capture key meteorological conditions such as temperature, humidity, wind speed, and rainfall.
+#'
+#' The target variable, `RainTomorrow`, is a binary indicator with values "Yes" or "No".
+#' Since several predictors contain missing values, this dataset is also well-suited for exploring
+#' preprocessing techniques such as missing data imputation or feature engineering.
+#'
+#' @format A data frame with 142,193 rows and 24 columns:
+#' \describe{
+#'   \item{Date}{Character. The date of the observation in YYYY-MM-DD format. Useful for time-based feature extraction or chronological splits.}
+#'   \item{Location}{Factor. The name of the weather station (e.g., Albury, Cairns). Represents the geographical location of the observation.}
+#'   \item{MinTemp}{Numeric. Minimum temperature (°C) recorded that day. Can be used to assess the overnight cooling.}
+#'   \item{MaxTemp}{Numeric. Maximum temperature (°C) recorded that day. Typically reached in the afternoon.}
+#'   \item{Rainfall}{Numeric. Amount of rainfall (mm) recorded over the 24-hour period to 9am. A value of 0 indicates no rain.}
+#'   \item{Evaporation}{Numeric. Pan evaporation (mm) over 24 hours. Available only at selected locations. Indicates water loss due to evaporation.}
+#'   \item{Sunshine}{Numeric. Number of hours of bright sunshine in the day. Often correlates negatively with rainfall.}
+#'   \item{WindGustDir}{Factor. Cardinal direction (e.g., N, NW, SE) of the strongest wind gust during the day.}
+#'   \item{WindGustSpeed}{Numeric. Speed (km/h) of the strongest wind gust observed in the day.}
+#'   \item{WindDir9am}{Factor. Wind direction at 9am local time.}
+#'   \item{WindDir3pm}{Factor. Wind direction at 3pm local time.}
+#'   \item{WindSpeed9am}{Numeric. Wind speed (km/h) at 9am.}
+#'   \item{WindSpeed3pm}{Numeric. Wind speed (km/h) at 3pm.}
+#'   \item{Humidity9am}{Numeric. Relative humidity (\%) at 9am. High humidity may indicate potential for rain.}
+#'   \item{Humidity3pm}{Numeric. Relative humidity (\%) at 3pm. Often used for forecasting afternoon storms.}
+#'   \item{Pressure9am}{Numeric. Atmospheric pressure (hPa) at 9am. Low pressure often precedes rainy conditions.}
+#'   \item{Pressure3pm}{Numeric. Atmospheric pressure (hPa) at 3pm.}
+#'   \item{Cloud9am}{Numeric (0–8). Fraction of the sky covered by cloud at 9am, where 0 = clear and 8 = fully overcast.}
+#'   \item{Cloud3pm}{Numeric (0–8). Cloud cover at 3pm. Missing in many locations.}
+#'   \item{Temp9am}{Numeric. Temperature (°C) recorded at 9am. Often used in combination with humidity and pressure to forecast weather.}
+#'   \item{Temp3pm}{Numeric. Temperature (°C) at 3pm.}
+#'   \item{RainToday}{Factor. Whether it rained today ("Yes" or "No"), based on whether at least 1mm of rain was recorded. This is a useful predictor for RainTomorrow.}
+#'   \item{RainTomorrow}{Factor. \strong{Target variable} — "Yes" if 1mm or more of rain is expected the next day, "No" otherwise. This is the binary label used for classification.}
+#' }
+#'
+#' @details
+#' - Time span: The dataset includes observations from 2008 to 2017. \cr
+#' - Locations: Covers multiple cities and regions across Australia. \cr
+#' - Missing values: Several columns have missing entries, particularly Evaporation, Sunshine, and cloud-related features. \cr
+#' - Categorical encoding: Some categorical variables may need to be one-hot or label encoded for modeling.
+#'
+#' This dataset is ideal for binary classification problems (e.g., logistic regression, random forest, gradient boosting,
+#' or neural networks) and can also be used to experiment with feature engineering, imputation, and temporal models.
+#'
+#' @source Derived from the Australian Bureau of Meteorology's weather dataset.
+#' Original source: \url{https://www.kaggle.com/jsphyg/weather-dataset-rattle-package}
+#'
+#' @examples
+#' data(weatherAUS)
+#'
+#' # View basic structure
+#' str(weatherAUS)
+#'
+#' # Summary statistics
+#' summary(weatherAUS)
+#'
+#' # Check balance of target classes
+#' table(weatherAUS$RainTomorrow)
+"weatherAUS"
+

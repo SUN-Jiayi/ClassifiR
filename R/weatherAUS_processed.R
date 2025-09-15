@@ -1,0 +1,140 @@
+#' Preprocessed Australian Weather Dataset for Binary Classification
+#'
+#' A fully cleaned and preprocessed weather dataset derived from the original
+#' Australian Bureau of Meteorology records. This dataset is tailored for
+#' binary classification tasks, particularly for predicting whether it will
+#' rain the next day (`RainTomorrow`). All preprocessing steps have been performed
+#' in advance to ensure the dataset is machine-learning ready.
+#'
+#' @description
+#' This dataset contains meteorological observations from various weather stations
+#' in Australia. The data has been extensively processed to remove missing values,
+#' convert categorical variables into numeric representations (via one-hot encoding),
+#' and extract meaningful time-based features from date information. It includes 92
+#' columns and 56,420 observations, with the final column being the target label.
+#'
+#' @details
+#' The dataset was prepared through the following steps:
+#' \itemize{
+#'   \item The original `Date` column was decomposed into three numerical variables: `Year`, `Month`, and `Day`, enabling time-aware modeling.
+#'   \item Categorical variables such as `Location`, `WindGustDir`, `WindDir9am`, `WindDir3pm`, and `RainToday` were transformed using one-hot encoding.
+#'         One level from each category was dropped to avoid multicollinearity due to the dummy variable trap.
+#'   \item Numerical variables (e.g., temperatures, wind speed, humidity, pressure, cloud cover) were retained as-is.
+#'   \item All rows containing missing values in any column were removed.
+#'   \item The target variable `RainTomorrow` was kept as a binary categorical variable ("Yes", "No").
+#' }
+#'
+#' The dataset contains no missing values and no non-numeric predictors. All categorical variables were converted into a set of binary dummy variables.
+#' This makes the dataset directly usable for most machine learning algorithms without additional preprocessing.
+#'
+#' @format A data frame with 56420 rows and 92 variables:
+#' \describe{
+#'   \item{MinTemp}{Minimum temperature (°C) recorded on the day.}
+#'   \item{MaxTemp}{Maximum temperature (°C) recorded on the day.}
+#'   \item{Rainfall}{Total rainfall (mm) recorded to 9am on the day.}
+#'   \item{Evaporation}{Evaporation (mm) in the 24 hours to 9am.}
+#'   \item{Sunshine}{Total hours of bright sunshine during the day.}
+#'   \item{WindGustSpeed}{Speed (km/h) of the strongest wind gust during the day.}
+#'   \item{WindSpeed9am}{Wind speed (km/h) measured at 9am.}
+#'   \item{WindSpeed3pm}{Wind speed (km/h) measured at 3pm.}
+#'   \item{Humidity9am}{Relative humidity (\%) at 9am.}
+#'   \item{Humidity3pm}{Relative humidity (\%) at 3pm.}
+#'   \item{Pressure9am}{Atmospheric pressure (hPa) at 9am.}
+#'   \item{Pressure3pm}{Atmospheric pressure (hPa) at 3pm.}
+#'   \item{Cloud9am}{Fraction of sky covered in cloud at 9am, on a scale from 0 to 8.}
+#'   \item{Cloud3pm}{Fraction of sky covered in cloud at 3pm, on a scale from 0 to 8.}
+#'   \item{Temp9am}{Temperature (°C) recorded at 9am.}
+#'   \item{Temp3pm}{Temperature (°C) recorded at 3pm.}
+#'   \item{Year}{Year extracted from the original date.}
+#'   \item{Month}{Month extracted from the original date.}
+#'   \item{Day}{Day extracted from the original date.}
+#'   \item{LocationBrisbane}{Binary indicator for Location: Brisbane.}
+#'   \item{LocationCairns}{Binary indicator for Location: Cairns.}
+#'   \item{LocationCanberra}{Binary indicator for Location: Canberra.}
+#'   \item{LocationCobar}{Binary indicator for Location: Cobar.}
+#'   \item{LocationCoffsHarbour}{Binary indicator for Location: Coffs Harbour.}
+#'   \item{LocationDarwin}{Binary indicator for Location: Darwin.}
+#'   \item{LocationHobart}{Binary indicator for Location: Hobart.}
+#'   \item{LocationMelbourne}{Binary indicator for Location: Melbourne.}
+#'   \item{LocationMelbourneAirport}{Binary indicator for Location: MelbourneAirport.}
+#'   \item{LocationMildura}{Binary indicator for Location: Mildura.}
+#'   \item{LocationMoree}{Binary indicator for Location: Moree.}
+#'   \item{LocationMountGambier}{Binary indicator for Location: Mount Gambier.}
+#'   \item{LocationNorfolkIsland}{Binary indicator for Location: NorfolkIsland.}
+#'   \item{LocationNuriootpa}{Binary indicator for Location: Nuriootpa.}
+#'   \item{LocationPerth}{Binary indicator for Location: Perth.}
+#'   \item{LocationPerthAirport}{Binary indicator for Location: Perth airport.}
+#'   \item{LocationPortland}{Binary indicator for Location: Portland.}
+#'   \item{LocationSale}{Binary indicator for Location: Sale.}
+#'   \item{LocationSydney}{Binary indicator for Location: Sydney.}
+#'   \item{LocationSydneyAirport}{Binary indicator for Location: Sydney airport.}
+#'   \item{LocationTownsville}{Binary indicator for Location: Townsville.}
+#'   \item{LocationWaggaWagga}{Binary indicator for Location: Wagga Wagga.}
+#'   \item{LocationWatsonia}{Binary indicator for Location: Watsonia.}
+#'   \item{LocationWilliamtown}{Binary indicator for Location: Williamtown.}
+#'   \item{LocationWoomera}{Binary indicator for Location: Woomera}
+#'   \item{WindGustDirENE}{Wind gust direction: East-Northeast.}
+#'   \item{WindGustDirESE}{Wind gust direction: East-Southeast.}
+#'   \item{WindGustDirN}{Wind gust direction: North.}
+#'   \item{WindGustDirNE}{Wind gust direction: Northeast.}
+#'   \item{WindGustDirNNE}{Wind gust direction: North-Northeast.}
+#'   \item{WindGustDirNNW}{Wind gust direction: North-Northwest.}
+#'   \item{WindGustDirNW}{Wind gust direction: Northwest.}
+#'   \item{WindGustDirS}{Wind gust direction: South.}
+#'   \item{WindGustDirSE}{Wind gust direction: Southeast.}
+#'   \item{WindGustDirSSE}{Wind gust direction: South-Southeast.}
+#'   \item{WindGustDirSSW}{Wind gust direction: South-Southwest.}
+#'   \item{WindGustDirSW}{Wind gust direction: Southwest.}
+#'   \item{WindGustDirW}{Wind gust direction: West.}
+#'   \item{WindGustDirWNW}{Wind gust direction: West-Northwest.}
+#'   \item{WindGustDirWSW}{Wind gust direction: West-Southwest.}
+#'   \item{WindDir9amENE}{Wind direction at 9am: East-Northeast.}
+#'   \item{WindDir9amESE}{Wind direction at 9am: East-Southeast.}
+#'   \item{WindDir9amN}{Wind direction at 9am: North.}
+#'   \item{WindDir9amNE}{Wind direction at 9am: Northeast.}
+#'   \item{WindDir9amNNE}{Wind direction at 9am: North-Northeast.}
+#'   \item{WindDir9amNNW}{Wind direction at 9am: North-Northwest.}
+#'   \item{WindDir9amNW}{Wind direction at 9am: Northwest.}
+#'   \item{WindDir9amS}{Wind direction at 9am: South.}
+#'   \item{WindDir9amSE}{Wind direction at 9am: Southeast.}
+#'   \item{WindDir9amSSE}{Wind direction at 9am: South-Southeast.}
+#'   \item{WindDir9amSSW}{Wind direction at 9am: South-Southwest.}
+#'   \item{WindDir9amSW}{Wind direction at 9am: Southwest.}
+#'   \item{WindDir9amW}{Wind direction at 9am: West.}
+#'   \item{WindDir9amWNW}{Wind direction at 9am: West-Northwest.}
+#'   \item{WindDir9amWSW}{Wind direction at 9am: West-Southwest.}
+#'   \item{WindDir3pmENE}{Wind direction at 3pm: East-Northeast.}
+#'   \item{WindDir3pmESE}{Wind direction at 3pm: East-Southeast.}
+#'   \item{WindDir3pmN}{Wind direction at 3pm: North.}
+#'   \item{WindDir3pmNE}{Wind direction at 3pm: Northeast.}
+#'   \item{WindDir3pmNNE}{Wind direction at 3pm: North-Northeast.}
+#'   \item{WindDir3pmNNW}{Wind direction at 3pm: North-Northwest.}
+#'   \item{WindDir3pmNW}{Wind direction at 3pm: Northwest.}
+#'   \item{WindDir3pmS}{Wind direction at 3pm: South.}
+#'   \item{WindDir3pmSE}{Wind direction at 3pm: Southeast.}
+#'   \item{WindDir3pmSSE}{Wind direction at 3pm: South-Southeast.}
+#'   \item{WindDir3pmSSW}{Wind direction at 3pm: South-Southwest.}
+#'   \item{WindDir3pmSW}{Wind direction at 3pm: Southwest.}
+#'   \item{WindDir3pmW}{Wind direction at 3pm: West.}
+#'   \item{WindDir3pmWNW}{Wind direction at 3pm: West-Northwest.}
+#'   \item{WindDir3pmWSW}{Wind direction at 3pm: West-Southwest.}
+#'   \item{RainTodayYes}{Binary indicator: 1 if it rained today, 0 otherwise.}
+#'   \item{RainTomorrow}{Target variable: factor with levels "Yes" and "No", indicating whether 1mm or more of rain is expected the following day.}
+#' }
+#'
+#' @usage
+#' data(weatherAUS_processed)
+#'
+#' @examples
+#' # Load the dataset
+#' data("weatherAUS_processed")
+#'
+#' # View basic structure
+#' str(weatherAUS_processed)
+#'
+#' # Summarize target label distribution
+#' table(weatherAUS_processed$RainTomorrow)
+#'
+#' @source Derived from the Australian Bureau of Meteorology's weather dataset.
+#' Original source: \url{https://www.kaggle.com/jsphyg/weather-dataset-rattle-package}
+"weatherAUS_processed"

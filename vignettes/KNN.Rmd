@@ -1,0 +1,134 @@
+---
+title: "KNN"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{KNN}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+library(ClassifiR)
+library(ggplot2)
+library(readxl)
+```
+
+## Introduction
+
+The `my_knn()` function in the `ClassifiR` package is a custom implementation of the K-Nearest Neighbors (KNN) algorithm for binary classification, written from scratch in base R. This function enables users to explore how KNN works without relying on external libraries such as class or caret.
+
+In this vignette, we will demonstrate how to:
+
+1. Load and split a binary-labeled dataset;
+
+2. Fit a KNN classifier;
+
+3. Evaluate prediction results;
+
+4. Visualize probability distributions;
+
+5. Experiment with tuning the number of neighbors.
+
+## Load Data
+
+For this vignette, we will use a weather dataset that has already been cleaned and processed for binary classification tasks.
+
+The last column in the dataset represents the binary response variable (e.g., rain or no rain). All other columns are normalized numerical features.
+
+```{r}
+data("weatherAUS_processed")
+
+weather_subset <- weatherAUS_processed[sample(nrow(weatherAUS_processed), 2000), ]
+
+train_data <- weather_subset[1:1600, ]
+test_data <- weather_subset[1601:2000, ]
+```
+
+## Run KNN
+
+We now train a KNN classifier with the default parameter.
+
+There is a vector of candidate values for {k}, whose default is {c(3, 5, 7)}. It can also be manually changed. We can type any k values you think it might be the best. Among the function, it will iterate each value of k and choose the best k which will return the best model output.
+
+```{r}
+model <- my_knn(train_data, test_data)
+```
+
+Here is the example of how to using manually parameter.
+
+```{r}
+model_tuned <- my_knn(train_data, test_data, k_values=c(1, 5, 10))
+mean(model_tuned$prediction == test_data[[ncol(test_data)]])
+```
+
+## Evaluate and Visualize
+
+This returns a list with:
+
+`prediction`: predicted class labels (0 or 1),
+
+`probability`: proportion of neighbors that voted for class 1.
+
+```{r}
+# View prediction results
+head(model$prediction)
+head(model$probability)
+```
+
+We can assess the model's accuracy and inspect the prediction outputs:
+
+```{r}
+accuracy_knn <- mean(model$prediction == test_data[[ncol(test_data)]])
+accuracy_knn
+```
+
+## Visualize Prediction Probabilities
+
+Let’s plot the distribution of predicted probabilities, grouped by actual class labels:
+
+```{r}
+# Plot predicted probability distribution
+df_plot <- data.frame(
+  Actual = factor(test_data[[ncol(test_data)]]),
+  Predicted = model$prediction,
+  Probability = model$probability
+)
+
+ggplot(df_plot, aes(x = Probability, fill = Actual)) +
+  geom_histogram(bins = 10, alpha = 0.6, position = "identity") +
+  labs(title = "KNN: Predicted Probabilities vs Actual",
+       x = "Predicted Probability of Rain",
+       fill = "Actual Label")
+```
+
+## Try Different k Values
+
+We can explore how different values of k affect performance.
+
+```{r}
+evaluate_k <- function(k) {
+  model_k <- my_knn(train_data, test_data, k = k)
+  acc <- mean(model_k$prediction == test_data[[ncol(test_data)]])
+  return(data.frame(k = k, Accuracy = acc))
+}
+
+# Try k from 1 to 2
+results <- do.call(rbind, lapply(1:15, evaluate_k))
+
+ggplot(results, aes(x = k, y = Accuracy)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "KNN Accuracy for Different k Values", x = "k (Number of Neighbors)", y = "Accuracy")
+```
+
+## Conclusion
+
+The `my_knn()` function from `ClassifiR`:
+
+1. Offers an interpretable and transparent KNN implementation;
+
+2. Provides both predicted class labels and estimated probabilities;
+
+3. Supports exploration of k values for tuning;
+
+4. Enables educational insight into KNN mechanics.

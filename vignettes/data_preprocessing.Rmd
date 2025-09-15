@@ -1,0 +1,192 @@
+---
+title: "Data Preprocessing"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Data Preprocessing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ClassifiR)
+```
+
+# Introduction to dataPreprocessing function
+
+The `dataPreprocessing` function in our package is designed to perform various preprocessing steps on datasets. These steps include handling missing values, splitting date columns into year, month, and day, and encoding categorical variables using one-hot encoding.
+
+This vignette will show you how to use the `dataPreprocessing` function, explaining the main arguments and providing examples.
+
+## Function Overview
+
+The `dataPreprocessing` function takes a data frame as input and performs the following tasks:
+
+-   **Handling Missing Values:** The function removes rows with `NA` values.
+-   **Splitting Date Columns:** If the dataset contains a `Date` column, it can be split into separate `Year`, `Month`, and `Day` columns.
+-   **One-Hot Encoding:** Categorical variables in the dataset can be one-hot encoded for use in machine learning models.
+
+The function also accepts arguments for customizing behavior such as one-hot encoding and splitting date columns.
+
+## Handling Date column
+
+If the dataset has a Date column, it will be split into Year, Month, and Day columns.
+
+```{r}
+data <- data.frame(
+  ID = 1:5,
+  Date = c("2021-01-01", "2021-02-15", "2021-03-10", "2021-04-22", "2021-05-03"),
+  Category = c("A", "B", "C", "A", "B"),
+  Value = c(10, 20, 30, 40, 50)
+)
+processed <- dataPreprocessing(data, one_hot = FALSE, split_date = TRUE)
+head(processed)
+```
+
+## One hot encoding
+
+If the one_hot argument is set to TRUE, categorical columns will be one-hot encoded.
+
+```{r}
+data <- data.frame(
+  ID = 1:5,
+  Date = c("2021-01-01", "2021-02-15", "2021-03-10", "2021-04-22", "2021-05-03"),
+  Category = c("A", "B", "C", "A", "B"),
+  Value = c(10, 20, 30, 40, 50)
+)
+processed <- dataPreprocessing(data, one_hot = TRUE, split_date = TRUE)
+head(processed)
+```
+
+## Handling missing values
+
+By default, rows containing NA values are removed. Here's an example where NA values are handled:
+
+```{r}
+data_with_na <- data.frame(
+  ID = 1:5,
+  Date = c("2021-01-01", "2021-02-15", NA, "2021-04-22", "2021-05-03"),
+  Category = c("A", "B", NA, "A", "B"),
+  Value = c(10, 20, 30, NA, 50)
+)
+processed_data_with_na <- dataPreprocessing(data_with_na)
+head(processed_data_with_na)
+```
+
+## Moving label to the last column
+
+If the label_col argument is given, then the column with the corresponding name will be moved to the last after all preprocessing steps.
+
+```{r}
+data <- data.frame(
+  ID = 1:5,
+  Date = c("2021-01-01", "2021-02-15", "2021-03-10", "2021-04-22", "2021-05-03"),
+  Category = c("A", "B", "A", "A", "B"),
+  Value = c(10, 20, 30, 40, 50)
+)
+processed <- dataPreprocessing(data, one_hot = TRUE, split_date = TRUE, label_col = "Category")
+head(processed)
+```
+
+# Demonstration using weatherAUS dataset
+
+Here’s a basic example of how to use the `dataPreprocessing` function.
+
+```{r}
+data("weatherAUS")
+head(weatherAUS, 15)
+w <- dataPreprocessing(weatherAUS, label_col = "RainTomorrow")
+head(w, 15)
+
+```
+
+# Introduction to splitDataset\_ function
+
+The `splitDataset_` function is designed to randomly split a data frame into two parts: a training set and a testing set. The function allows users to specify the proportion of data to be allocated for testing, and it ensures reproducibility through a seed parameter.
+
+## Parameters
+
+-   **data:** A data frame. This is the data that will be split. The function requires that the data frame is non-empty and contains at least one row.
+
+-   **test_ratio:** A numeric value between 0 and 1. This parameter defines the proportion of the data to be used for the testing set. The default value is 0.2, meaning that 20% of the data will be used for testing, and the remaining 80% will be used for training.
+
+-   **seed:** A numeric value specifying the random seed for reproducibility. The default seed value is 42. This ensures that if you run the function multiple times with the same data and parameters, you will always get the same split.
+
+## Return values
+
+The function returns a list containing two data frames:
+
+-   **train:** The training set, which is a subset of the original data based on the test_ratio.
+
+-   **test:** The testing set, which is the complementary subset of the original data.
+
+## Details
+
+The function works by:
+
+1.  Checking that the input data is a valid non-empty data frame.
+
+2.  Validating the test_ratio to ensure it's between 0 and 1.
+
+3.  Validating that the seed is a single integer.
+
+4.  Using the set.seed() function for reproducibility.
+
+5.  Randomly selecting rows for the test set based on the test_ratio.
+
+6.  Returning the two data sets (training and testing) as a list.
+
+This process ensures that the split is reproducible and the training and testing sets are randomized.
+
+## Examples
+
+### Example 1: Basic split
+
+```{r}
+df <- data.frame(x = 1:10, y = 11:20)
+
+# Split the data with 30% for testing and 70% for training
+result <- splitDataset_(df, test_ratio = 0.3, seed = 123)
+
+# Check that the total number of rows in train and test data is equal to the original data frame
+nrow(result$train) + nrow(result$test) == nrow(df)
+```
+
+In this example:
+
+A data frame df is created with two columns x and y.
+
+The data is split with 30% allocated for testing and 70% for training, using a fixed random seed for reproducibility.
+
+The nrow(result$train) + nrow(result$test) == nrow(df) line checks that the number of rows in the combined training and testing sets is the same as the original data frame.
+
+### Example 2: Verifying the reproducibility of the function
+
+```{r}
+# Create the same data frame and use the same seed for two splits
+split_1 <- splitDataset_(df, test_ratio = 0.2, seed = 42)
+split_2 <- splitDataset_(df, test_ratio = 0.2, seed = 42)
+
+# Check if the splits are identical
+identical(split_1$train, split_2$train)  # TRUE
+identical(split_1$test, split_2$test)    # TRUE
+
+```
+
+In this example:
+
+The data is split twice using the same seed and test ratio.
+
+The identical() function is used to verify that the two splits are identical, confirming the reproducibility of the function.
+
+## Conclusion
+
+The splitDataset\_ function is a simple and effective tool for splitting data into training and testing sets. By specifying a test ratio and a random seed, users can ensure that their splits are reproducible, which is essential for machine learning and model evaluation tasks.
+
+For further information, please refer to the official documentation of the function or the associated R package.

@@ -1,0 +1,103 @@
+---
+title: "package_introduction"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{package_introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ClassifiR)
+```
+
+# ClassifiR
+
+## Overview
+
+`ClassifiR` is an educational R package that provides a clean and beginner-friendly implementation of multiple binary classification models from scratch. It is designed for learning and comparative analysis, offering hands-on models with machine learning workflows in R.
+
+The package supports:
+
+- Data preprocessing and cleaning
+- Multiple classification models
+  - Logistic Regression
+  - K-Nearest Neighbors (KNN)
+  - Support Vector Machine (SVM)
+  - Decision Tree
+  - Random Forest
+  - Boosting
+- Model evaluation tools
+  - Confusion Matrix
+  - ROC Curve
+  - AUC
+  - Accuracy, F1 Score and other related metrics
+
+## Dataset
+
+The package uses the `weatherAUS.csv` dataset, which includes daily weather observations from various Australian weather stations. The goal is to predict whether it will rain tomorrow (`RainTomorrow`) based on today’s weather features.
+
+## Key Advantages
+
+### 1.Complete Workflow in One Package
+ClassifiR provides a comprehensive end-to-end solution, covering every step from raw data to final model predictions. It includes robust preprocessing tools to handle missing values, normalize numerical features, and encode categorical variables. In addition, it offers functionality for feature engineering and dataset partitioning. The package also supports model training, performance evaluation, and comparison across multiple algorithms. With all essential components integrated into a single package, users can streamline their workflow while avoiding the complexity and potential confusion of importing numerous external libraries.
+
+### 2. Multiple Models to Try and Compare
+The package includes six models developed from scratch:
+
+- K-Nearest Neighbors (KNN)
+- Logistic Regression
+- Support Vector Machine (SVM)
+- Decision Tree
+- Random Forest
+- Boosting
+
+Users can easily train and compare these models to identify the one that best fits their specific classification task.
+
+### 3. Automatic Hyperparameter Tuning
+ClassifiR supports automatic tuning of key hyperparameters, such as the maximum depth of decision trees and the number of iterations in boosting models. For each model, the package evaluates multiple user-specified parameter combinations using internal validation and selects the one that yields the best performance. This approach helps improve model accuracy while reducing the need for manual trial-and-error.
+
+### 4. Best Model Selection and Performance Comparison
+After users have trained the models and provided the corresponding prediction results, ClassifiR can automatically identify the best-performing model under various user-specified metrics such as accuracy, AUC, or precision. It also allows users to examine each model’s predictions, evaluation metrics, and ROC curves to better understand performance differences and the reasoning behind model selection across different criteria.
+
+### 5. Structured and Interpretable Outputs
+Each model in ClassifiR returns structured outputs, including predicted class labels, class probabilities, and model-specific components such as coefficients or decision trees. These outputs can be seamlessly integrated into the package’s visualization functions or exported for custom analysis.
+
+### 6. Integrated Evaluation Tools
+ClassifiR includes built-in functions to evaluate classification performance. These tools generate standard metrics such as the accuracy, precision, recall, F1 score, specificity, MCC, and log loss (if probabilities are provided). They allow users to assess model quality comprehensively and consistently across different algorithms.
+
+### 7. Educational and Transparent Implementation
+Most models in ClassifiR are implemented from first principles without relying on external machine learning libraries. This design choice makes the package especially suitable for educational purposes, allowing users to explore algorithm mechanics, training logic, and parameter tuning processes. The codebase includes detailed comments, illustrative examples, and unit tests to support learning and reproducibility.
+
+### 8. Insights Gained Through Coursework
+Throughout the class, we deepened our understanding of classification and R programming by building this package. Here are some points we learned from the course:
+
+1.Plotting Tools - Lecture Note 7
+we explored the use of R plotting tools to visualize model performance and prediction outcomes during evaluation part. This helped us successfully create the performance plot, like AUC and ROC, to make the results simpler and clearer.
+
+2. Functions - Lecture Note 8
+We also learned how to write clean and reusable R functions from lecture note 8. In addition, we paid close attention to the scope of variables to ensure there are no error.
+
+3.Statistical Prediction - Lecture Note 14
+We implemented and tested methods like K-Nearest Neighbors (KNN), Tree, and Boosting from scratch. These are the methods we learned from the lecture notes 14 - Statistical Prediction. We based on this note to complete and improve our models.
+
+Overall, the course taught us both the theory behind classification and the practical skills needed to apply these methods to real-world data.
+
+## Example Usage
+
+For the steps to use a specific function, please see the vignettes corresponding to the function.
+
+## Authors
+
+Developed by Zhiyin Zhang, Jiayi Sun, Chenrui Zhan as a course project to deepen understanding of classification algorithms and their evaluation.
+
+## License
+
+GPL-2

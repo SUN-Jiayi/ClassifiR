@@ -1,0 +1,40 @@
+Package: ClassifiR
+Type: Package
+Title: Binary Classification Model Comparison with Automated Tuning
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Zhiyin", "Zhang",
+      email = "122090782@link.cuhk.edu.cn",
+      role = c("aut", "cre")
+    ),
+    person(
+    "Chenrui", "Zhan",
+      email = "122090723@link.cuhk.edu.cn",
+      role = c("aut")
+    ),
+    person(
+    "Jiayi", "Sun",
+      email = "122090484@link.cuhk.edu.cn",
+      role = c("aut")
+    )
+  )
+Description: This package provides a comparison of multiple binary classification models with performance-based selection, and supports automated hyperparameter tuning within user-defined ranges. It includes preprocessing, modelling (KNN, logistic, SVM, decision tree，random forests, boosting), and evaluation functions (e.g., confusion matrix, ROC, AUC) along with visualization tools.
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Imports:
+    assertthat,
+    ggplot2,
+    pROC,
+    randomForest,
+    lubridate
+RoxygenNote: 7.3.2
+Suggests: 
+    knitr,
+    rmarkdown,
+    readxl,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Depends: 
+    R (>= 3.5)

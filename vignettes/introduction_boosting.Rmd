@@ -1,0 +1,154 @@
+---
+title: "introduction to boosting"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{introduction_boosting}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ClassifiR)
+```
+
+## Introduction to boosting
+
+This part demonstrates how to use the adaboost\_, predict_adaboost\_, and tune_adaboost\_ functions in the ClassifiR package for binary classification tasks. AdaBoost (Adaptive Boosting) is an ensemble method that combines weak learners to form a strong classifier.
+
+## Data preparation
+
+The ClassifiR package includes a pre-processed dataset named weatherAUS_processed. This dataset is already cleaned and ready to use for classification tasks. We'll begin by loading this dataset and splitting it into training and testing sets.
+
+```{r}
+data("weatherAUS_processed")
+train_test_list <- splitDataset_(weatherAUS_processed)
+train <- train_test_list$train
+test <- train_test_list$test
+# Check the structure
+head(train)
+head(test)
+
+# Confirm the last column is the binary target variable
+table(train[[ncol(train)]])
+table(test[[ncol(train)]])
+```
+
+## Step 1: Train a Boosting model with adaboost\_
+
+The adaboost\_() function trains an AdaBoost classifier, which works by sequentially training a series of weak learners (decision stumps) and adjusting their weights based on their performance. The final model is a weighted combination of all the weak learners, where each learner contributes according to its accuracy.
+
+### Train a model with 30 boosting rounds
+
+```{r}
+model <- adaboost_(data = train, n_iter = 30)
+```
+
+**Parameters:** - data: A data frame where all columns except the last are numeric features and the last column is the binary label.
+
+-   n_iter: Number of boosting rounds (i.e., how many weak learners to train). In each round, a decision stump (a simple decision tree) is trained, and its performance is evaluated.
+
+**Understanding the Model Structure**
+
+After training the model, you can inspect the structure of the model object to understand how many weak learners were trained and what the model consists of:
+
+```{r}
+str(model)
+```
+
+This command will show you the internal components of the model object. Specifically, it contains:
+
+-   models: A list of weak learners (decision stumps) trained during the boosting process. Each element in this list corresponds to one decision stump that was trained in one boosting iteration.
+
+-   alphas: A vector of weights (α values) corresponding to each weak learner. These weights indicate the importance of each weak learner in the final ensemble model.\
+
+## Step 2: Predict labels with predict_adaboost\_()
+
+After training an AdaBoost model, the next step is to use it to make predictions on new, unseen data. In this case, we will use the test dataset and evaluate how well the model performs.
+
+**Generate Predictions on the Test Set**
+
+The function predict_adaboost\_() takes in the trained model and a new dataset (test set) to predict labels. These predictions are based on the weak learners (decision stumps) in the AdaBoost model and the boosting rounds.
+
+```{r}
+predictions <- predict_adaboost_(model, newdata = test)
+head(predictions)
+```
+
+### Explanation of input parameters
+
+-   model: The AdaBoost model you trained in Step 1. This model contains the weak learners (stumps) and their associated weights.
+
+-   newdata: This is the test data (in this case, test), which should have the same feature structure as the training data.
+
+### Output
+
+The function returns a vector of predicted labels (either 0 or 1) for the test set based on the AdaBoost model.
+
+## Automatic hyper parameter tuning with tune_adaboost\_()
+
+Selecting the appropriate number of boosting rounds (n_iter) is essential for building a well-performing AdaBoost model. To find the optimal number of iterations, we provide the tune_adaboost\_() function, which performs a simple grid search over a set of candidate values using a hold-out validation set.
+
+This step demonstrates how to split the available training data into internal training and validation subsets, perform hyperparameter tuning, and extract the best model and parameter.
+
+### Create Internal Training and Validation Sets
+
+Before tuning, we divide the original training data into two parts:
+
+-   train_internal: used to train models
+
+-   val_internal: used to validate model performance and select the best n_iter
+
+```{r}
+set.seed(123)
+train_idx <- sample(seq_len(nrow(train)), size = 0.8 * nrow(train))
+train_internal <- train[train_idx, ]
+val_internal <- train[-train_idx, ]
+```
+
+### Run Hyperparameter Tuning
+
+Now, we use tune_adaboost\_() to search for the best number of boosting iterations. This function will:
+
+-   Train an AdaBoost model on train_internal for each value in iter_options
+
+-   Evaluate the model’s accuracy on val_internal
+
+-   Select and return the model with the highest validation accuracy
+
+```{r}
+tuned_result <- tune_adaboost_(
+  train_data = train_internal,
+  val_data = val_internal,
+  iter_options = c(10, 20),
+  verbose = TRUE  # Print accuracy for each trial
+)
+```
+
+**Parameters:**
+
+-   train_data: Data used to train the AdaBoost models.
+
+-   val_data: Data used to evaluate performance.
+
+-   iter_options: A numeric vector of candidate values for n_iter.
+
+-   verbose: If TRUE, prints accuracy results for each iteration.
+
+### Retrieve the best model and parameters
+
+After tuning completes, the best model and its corresponding number of iterations (n_iter) are returned in a list:
+
+```{r}
+best_model <- tuned_result$model
+best_n_iter <- tuned_result$n_iter
+best_n_iter
+```
+
+After retrieving the best model, you can make predictions on the test set (see Step 2).

@@ -1,0 +1,98 @@
+---
+title: "random_forest"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{random_forest}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ClassifiR)
+```
+
+# Data Preparation and Splitting
+
+We start by loading the preprocessed weather dataset that has been cleaned and prepared for binary classification tasks.
+
+```{r}
+data("weatherAUS_processed")
+head(weatherAUS_processed)
+```
+
+Next, we split the data into training and testing subsets using the helper function splitDataset_().
+
+We remove the label column from the feature matrix, storing them separately as X_train / X_test for features and y_train / y_test for labels. This prepares the data for training and evaluation.
+
+```{r}
+train_test_list = splitDataset_(weatherAUS_processed)
+train = train_test_list$train
+test = train_test_list$test
+X_train = train[, !(colnames(train) %in% c("RISK_MM", colnames(train)[ncol(train)]))]
+y_train = train[[ncol(train)]]
+
+X_test = test[, !(colnames(test) %in% c("RISK_MM", colnames(test)[ncol(test)]))]
+y_test = test[[ncol(test)]]
+```
+
+# Random Forest for Binary Classification
+
+Random forest is an ensemble model that builds multiple decision trees and aggregates their predictions. 
+The model offers better generalization performance and built-in feature importance.
+
+## Hyperparameter Tuning
+
+We begin by tuning the hyperparameters of the Random Forest model.
+
+Specifically, we explore combinations of mtry (number of features randomly selected at each split) and nodesize (minimum number of observations in a terminal node). The goal is to find the best configuration that maximizes performance on the validation set.
+
+```{r}
+tuning_rf = tune_random_forest(
+  X_train, y_train,
+  mtry_values = c(10, 20, 30),
+  nodesize_values = c(1, 5, 10),
+  ntree = 100,
+  split_ratio = 0.8,
+  seed = 123
+)
+```
+
+## Train the Final Random Forest Model
+
+After identifying the best hyperparameters, we use the entire training set to fit the final model using train_random_forest().
+
+```{r}
+rf_model = train_random_forest(
+  X_train, y_train,
+  ntree = 100,
+  mtry = tuning_rf$best_params$mtry,
+  nodesize = tuning_rf$best_params$nodesize
+)
+```
+
+## Make Predictions on Test Set
+
+We predict the probabilities for the positive class (label 1) using the trained model, and then threshold these probabilities at 0.5 to obtain binary predictions.
+
+```{r}
+probs_rf = predict_random_forest_prob(rf_model, X_test)
+preds_rf = as.integer(probs_rf >= 0.5)
+```
+
+# Conclusion
+
+We take a look at the first few predicted probabilities and predicted class labels, then calculate the overall accuracy on the test set to get a quick sense of performance.
+
+```{r}
+head(probs_rf, 10)
+head(preds_rf, 10)
+mean(preds_rf == y_test)
+```
+Further evaluation with precision, recall, F1 score, and ROC/AUC analysis is recommended for a more comprehensive understanding.
